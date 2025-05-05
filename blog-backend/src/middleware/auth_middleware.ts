@@ -1,74 +1,74 @@
+// src/middleware/authMiddleware.ts
 import { Request, Response, NextFunction } from 'express';
-import { JwtPayload } from 'jsonwebtoken';
-import { UserService } from '../services/user_service';
-import { AuthService } from '../services/auth_services';
+import * as AuthService from '../services/authservices';
 
-
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: any;
-      jwtPayload?: JwtPayload;
-    }
-  }
-}
-
-const userService = new UserService();
-const authService = new AuthService(userService);
-
-export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const token = extractTokenFromHeader(req);
-    
-    if (!token) {
-      return res.status(401).json({ message: 'Authentication token is missing' });
-    }
-    
-    const payload = authService.verifyToken(token);
-    
-    if (!payload) {
-      return res.status(401).json({ message: 'Invalid or expired token' });
-    }
-    
-    
-    const user = await userService.findById(payload.userId);
-    
-    if (!user) {
-      return res.status(401).json({ message: 'User not found' });
-    }
-    
-    
-    const { password: _, ...userWithoutPassword } = user;
-    req.user = userWithoutPassword;
-    req.jwtPayload = payload;
-    
-    next();
-  } catch (error) {
-    return res.status(401).json({ message: 'Authentication failed' });
-  }
-};
-
-export const roleGuard = (roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-    
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Forbidden: Insufficient permissions' });
-    }
-    
-    next();
-  };
-};
-
-const extractTokenFromHeader = (req: Request): string | null => {
-  const authHeader = req.headers.authorization;
+/**
+ * Middleware to authenticate JWT token
+ */
+export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
+  // Get token from header
+  const authHeader = req?.headers?.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
+    res.status(401).json({ error: 'No token provided' });
+    return;
   }
   
-  return authHeader.split(' ')[1];
+  const token = authHeader.split(' ')[1];
+  
+ 
+  const decoded = AuthService.verifyToken(token);
+  if (!decoded) {
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return;
+  }
+  
+ 
+  (req as any).userId = decoded.userId;
+  
+
+  next();
+};
+
+export const isPostAuthor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const postId = parseInt(req.params.id);
+    const userId = (req as any).userId;
+    
+    if (isNaN(postId)) {
+      res.status(400).json({ error: 'Invalid post ID' });
+      return;
+    }
+    
+    
+    const PostService = require('../services/postservices');
+    
+    
+    const post = await PostService.findById(postId);
+    
+    if (!post) {
+      res.status(404).json({ error: 'Post not found' });
+      return;
+    }
+    
+   
+    const user = await AuthService.getUserById(userId);
+    
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    
+    
+    if (user.username !== post.author) {
+      res.status(403).json({ error: 'You are not authorized to modify this post' });
+      return;
+    }
+    
+   
+    next();
+  } catch (error) {
+    console.error('Error in isPostAuthor middleware:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 };

@@ -1,126 +1,98 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { UserService } from '../services/user_service';
+// src/controllers/authController.ts
+import { Request, Response } from 'express';
+import * as AuthService from '../services/authservices';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-
-
-export const authenticateJwt = async (
-  req: Request, 
-  res: Response, 
-  next: NextFunction
-): Promise<void> => {
+/**
+ * Register a new user
+ */
+export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-   
-    const authHeader = req.headers.authorization;
+    const { username, email, password } = req.body;
     
-    if (!authHeader) {
-      res.status(401).json({ message: 'Authorization header missing' });
+    // Validate input
+    if (!username || !email || !password) {
+      res.status(400).json({ error: 'Username, email, and password are required' });
       return;
     }
     
-  
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer') {
-      res.status(401).json({ message: 'Invalid authorization format' });
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      res.status(400).json({ error: 'Invalid email format' });
       return;
     }
     
-    const token = parts[1];
-
-    const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
-    
-    // Get the user from database
-    const userService = new UserService();
-    const user = await userService.findById(decoded.userId);
-    
-    if (!user) {
-      res.status(401).json({ message: 'User not found' });
+    // Password validation (minimum 6 characters)
+    if (password.length < 6) {
+      res.status(400).json({ error: 'Password must be at least 6 characters long' });
       return;
     }
     
-    // Attach the user to the request object
-    req.user = user;
+    const user = await AuthService.register(username, email, password);
     
-    // Continue to the next middleware/route handler
-    next();
-  } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      res.status(401).json({ message: 'Token expired' });
-    } else if (error instanceof jwt.JsonWebTokenError) {
-      res.status(401).json({ message: 'Invalid token' });
+    if (user) {
+      res.status(201).json({ message: 'User registered successfully', user });
     } else {
-      console.error('Auth middleware error:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      res.status(409).json({ error: 'Username or email already exists' });
     }
-  }
-};
-
-export const optionalAuthenticateJwt = async (
-  req: Request, 
-  res: Response, 
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const authHeader = req.headers.authorization;
-    
-    // If no authentication header, just continue
-    if (!authHeader) {
-      next();
-      return;
-    }
-    
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer') {
-      next();
-      return;
-    }
-    
-    const token = parts[1];
-    
-    // Try to verify the token
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
-      
-      const userService = new UserService();
-      const user = await userService.findById(decoded.userId);
-      
-      if (user) {
-        req.user = user;
-      }
-    } catch (tokenError) {
-      // Ignore token errors, just continue without user
-    }
-    
-    next();
   } catch (error) {
-    console.error('Optional auth middleware error:', error);
-    next();
+    console.error('Error registering user:', error);
+    res.status(500).json({ error: 'Failed to register user' });
   }
 };
 
 /**
- * Role-based authorization middleware
- * @param roles Array of allowed roles
+ * Login user
  */
-export const authorize = (roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    try {
-      if (!req.user) {
-        res.status(401).json({ message: 'Not authenticated' });
-        return;
-      }
-      
-      // Check if user has one of the required roles
-      if (!roles.includes(req.user.role)) {
-        res.status(403).json({ message: 'Insufficient permissions' });
-        return;
-      }
-      
-      next();
-    } catch (error) {
-      console.error('Authorization middleware error:', error);
-      res.status(500).json({ message: 'Internal server error' });
+export const login = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+    
+    // Validate input
+    if (!email || !password) {
+      res.status(400).json({ error: 'Email and password are required' });
+      return;
     }
-  };
+    
+    const result = await AuthService.login(email, password);
+    
+    if (result) {
+      res.status(200).json({
+        message: 'Login successful',
+        token: result.token,
+        user: result.user
+      });
+    } else {
+      res.status(401).json({ error: 'Invalid credentials' });
+    }
+  } catch (error) {
+    console.error('Error logging in:', error);
+    res.status(500).json({ error: 'Failed to login' });
+  }
+};
+
+/**
+ * Get current user profile
+ */
+export const getProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // The user ID will be set by the auth middleware
+    const userId = (req as any).userId;
+    
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    
+    const user = await AuthService.getUserById(userId);
+    
+    if (user) {
+      res.status(200).json({ user });
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error getting user profile:', error);
+    res.status(500).json({ error: 'Failed to get user profile' });
+  }
 };

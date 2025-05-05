@@ -1,24 +1,14 @@
-import { Router } from 'express';
-import { AuthController } from '../controllers/auth.controllers';
-import { authMiddleware } from '../middleware/auth_middleware';
 
-const router = Router();
-const authController = new AuthController();
+import express from 'express';
+import * as AuthController from '../controllers/auth.controllers';
+import { authenticate } from '../middleware/auth_middleware';
 
-// Public routes
-router.post('/login', (req, res) => authController.login(req, res));
-router.post('/register', (req, res) => authController.register(req, res));
-router.post('/refresh-token', (req, res) => authController.refreshToken(req, res));
-router.post('/logout', (req, res) => authController.logout(req, res));
-router.post('/forgot-password', (req, res) => authController.requestPasswordReset(req, res));
-router.post('/reset-password', (req, res) => authController.resetPassword(req, res));
+const router = express.Router();
 
-// Protected route example
-router.get('/me', authMiddleware, (req, res) => {
-  res.status(200).json({ 
-    message: 'Protected route accessed successfully',
-    user: req.user 
-  });
-});
+router.post('/register', AuthController.register);
+router.post('/login', AuthController.login);
+
+
+router.get('/profile', authenticate, AuthController.getProfile);
 
 export default router;

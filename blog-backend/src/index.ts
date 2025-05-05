@@ -1,40 +1,33 @@
-import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
 
+import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
+import authRoutes from './routers/auth_routers';
+import postRoutes from './routers/post_routers';
+
 
 dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-app.get('/', (req: Request, res: Response) => {
-  res.status(200).json({ message: ' Blog API is running' });
-})
 
 
-app.use((req: Request, res: Response) => {
-  res.status(404).json({ error: 'Route not found' });
+app.use('/api/auth', authRoutes);
+app.use('/api', postRoutes);
+
+
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
 });
 
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Server error:', err);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-
+  console.log(`Server running on port ${PORT}`);
 });
-
-
-
 
 export default app;
