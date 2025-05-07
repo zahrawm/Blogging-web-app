@@ -14,7 +14,7 @@ export const getAllPost = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-
+ 
 export const getPostById = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);

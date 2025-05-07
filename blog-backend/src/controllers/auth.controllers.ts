@@ -1,28 +1,25 @@
-// src/controllers/authController.ts
+
 import { Request, Response } from 'express';
 import * as AuthService from '../services/authservices';
 
-/**
- * Register a new user
- */
+
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, email, password } = req.body;
     
-    // Validate input
+   
     if (!username || !email || !password) {
       res.status(400).json({ error: 'Username, email, and password are required' });
       return;
     }
     
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       res.status(400).json({ error: 'Invalid email format' });
       return;
     }
     
-    // Password validation (minimum 6 characters)
+    
     if (password.length < 6) {
       res.status(400).json({ error: 'Password must be at least 6 characters long' });
       return;
