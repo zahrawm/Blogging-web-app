@@ -1,5 +1,6 @@
 // Adjust the path as necessary
-
+import React from "react";
+import myFood from '../assets/food.jpg'; // adjust path as needed
 
 export default function BlogPage() {
   return (
@@ -37,7 +38,7 @@ export default function BlogPage() {
           {[...Array(9)].map((_, i) => (
             <div key={i} className="bg-white border rounded-lg overflow-hidden shadow-sm">
               <img
-                src={`/post-image-${i + 1}.jpg`}
+                src={myFood}
                 alt="Post"
                 className="w-full h-48 object-cover"
               />
@@ -126,3 +127,5 @@ export default function BlogPage() {
     </div>
   );
 }
+
+
