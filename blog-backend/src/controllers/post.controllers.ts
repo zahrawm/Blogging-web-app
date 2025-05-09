@@ -37,9 +37,7 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-/**
- * Create a new blog post
- */
+
 export const createPost = async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, content } = req.body;
@@ -48,8 +46,7 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
       res.status(400).json({ error: 'Title is required' });
       return;
     }
-    
-    // Get the user ID from the authenticated request
+   
     const userId = (req as any).userId;
     const user = await AuthService.getUserById(userId);
     
@@ -62,7 +59,7 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
     const newPost: Omit<Post, 'id'> = {
       title,
       content: content || '',
-      author: user.username, // Set the author to the authenticated user's username
+      author: user.username, 
       createdAt: now,
       updatedAt: now
     };
