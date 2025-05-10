@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import myFood from '../assets/food.jpg'; // adjust path as needed
-// Import types (using JSDoc for JavaScript)
-// @ts-check
 
-/**
- * @typedef {import('../types/user').SafeUser} SafeUser
- */
+// Define SafeUser type
+interface SafeUser {
+  id?: string;
+  username: string;
+  email?: string;
+}
 
 export default function BlogPage() {
   // State for modals
@@ -16,21 +17,19 @@ export default function BlogPage() {
   const [loginValues, setLoginValues] = useState({ email: '', password: '' });
   const [signupValues, setSignupValues] = useState({ username: '', email: '', password: '' });
   
-  // State for auth status
-  /** @type {[SafeUser | null, React.Dispatch<React.SetStateAction<SafeUser | null>>]} */
-  const [user, setUser] = useState<string>('');
-const [token, setToken] = useState<string>('');
-
+  // State for auth status - properly typed
+  const [user, setUser] = useState<SafeUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [authError, setAuthError] = useState('');
 
   // Handle login form input changes
-  const handleLoginChange = (e:any)  => {
+  const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setLoginValues(prev => ({ ...prev, [name]: value }));
   };
 
   // Handle signup form input changes
-  const handleSignupChange = (e :any) => {
+  const handleSignupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSignupValues(prev => ({ ...prev, [name]: value }));
   };
@@ -60,21 +59,19 @@ const [token, setToken] = useState<string>('');
   };
 
   // Function to handle login submission
-  const handleLoginSubmit = (e : any) => {
+  const handleLoginSubmit = (e: React.FormEvent) => {
     if (e) e.preventDefault();
     try {
       // Mock successful login for development/testing
-      /** @type {SafeUser} */
-      const [user, setUser] = useState<string | null>(null);
-const [token, setToken] = useState<string | null>(null);
-
-// Assuming loginValues.email is already defined
-const mockUser = loginValues.email.split('@')[0]; // Just use the username
-
-const mockToken = "mock-token-" + Date.now();
-setToken(mockToken);
-setUser(mockUser); // Now `user` is just the string `username`
-
+      const mockUser: SafeUser = {
+        id: `user-${Date.now()}`,
+        username: loginValues.email.split('@')[0],
+        email: loginValues.email
+      };
+      
+      const mockToken = "mock-token-" + Date.now();
+      setToken(mockToken);
+      setUser(mockUser);
       
       // Store in localStorage for persistence
       localStorage.setItem('token', mockToken);
@@ -91,22 +88,20 @@ setUser(mockUser); // Now `user` is just the string `username`
     }
   };
 
-  
-  const handleSignupSubmit = (e : any) => {
+  // Function to handle signup submission
+  const handleSignupSubmit = (e: React.FormEvent) => {
     if (e) e.preventDefault();
     try {
+      // Mock successful signup for development/testing
+      const mockUser: SafeUser = {
+        id: `user-${Date.now()}`,
+        username: signupValues.username,
+        email: signupValues.email
+      };
       
-      /** @type {SafeUser} */
-      const [user, setUser] = useState<string | null>(null);
-const [token, setToken] = useState<string | null>(null);
-
-// Assuming loginValues.email is already defined
-const mockUser = loginValues.email.split('@')[0]; // Just use the username
-
-const mockToken = "mock-token-" + Date.now();
-setToken(mockToken);
-setUser(mockUser); // Now `user` is just the string `username`
-
+      const mockToken = "mock-token-" + Date.now();
+      setToken(mockToken);
+      setUser(mockUser);
       
       // Store in localStorage for persistence
       localStorage.setItem('token', mockToken);
@@ -123,20 +118,18 @@ setUser(mockUser); // Now `user` is just the string `username`
     }
   };
 
-
+  // Function to handle logout
   const handleLogout = () => {
+    setUser(null);
+    setToken(null);
     
-    setUser('');
-    setToken('');
-    
-  
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     
     console.log('Logged out successfully');
   };
 
- 
+  // Effect to check for existing auth on component mount
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
@@ -172,7 +165,7 @@ setUser(mockUser); // Now `user` is just the string `username`
         <div className="flex space-x-4">
           {user ? (
             <div className="flex items-center space-x-4">
-
+              <span>Welcome, {user.username}</span>
               <button 
                 className="bg-black text-white text-sm px-4 py-2 rounded-md hover:bg-gray-800 transition-colors"
                 onClick={handleLogout}
