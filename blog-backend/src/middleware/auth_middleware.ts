@@ -1,12 +1,10 @@
-// src/middleware/authMiddleware.ts
+
 import { Request, Response, NextFunction } from 'express';
 import * as AuthService from '../services/authservices';
 
-/**
- * Middleware to authenticate JWT token
- */
+
 export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
-  // Get token from header
+ 
   const authHeader = req?.headers?.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

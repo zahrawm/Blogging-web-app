@@ -72,9 +72,7 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-/**
- * Update an existing blog post
- */
+
 export const updatePost = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
@@ -93,14 +91,13 @@ export const updatePost = async (req: Request, res: Response): Promise<void> => 
       return;
     }
     
-    // The authentication middleware already verified that the user is the author,
-    // so we can proceed with the update
+   
     
     const updatedPost: Post = {
       id,
       title: title !== undefined ? title : existingPost.title,
       content: content !== undefined ? content : existingPost.content,
-      author: existingPost.author, // Keep the original author
+      author: existingPost.author, 
       createdAt: existingPost.createdAt,
       updatedAt: new Date()
     };
@@ -113,9 +110,7 @@ export const updatePost = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-/**
- * Delete a blog post
- */
+
 export const deletePost = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
@@ -125,8 +120,6 @@ export const deletePost = async (req: Request, res: Response): Promise<void> => 
       return;
     }
     
-    // The authentication middleware already verified that the user is the author,
-    // so we can proceed with the deletion
     
     const deleted = await PostService.remove(id);
     

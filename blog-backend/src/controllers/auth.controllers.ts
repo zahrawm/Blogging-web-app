@@ -38,14 +38,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-/**
- * Login user
- */
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
     
-    // Validate input
+  
     if (!email || !password) {
       res.status(400).json({ error: 'Email and password are required' });
       return;
@@ -68,12 +65,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-/**
- * Get current user profile
- */
+
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
-    // The user ID will be set by the auth middleware
+   
     const userId = (req as any).userId;
     
     if (!userId) {
